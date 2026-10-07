@@ -1,0 +1,36 @@
+name: Extract Apex web app
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Extract Safari package
+        run: |
+          rm -rf .apex_extract
+          mkdir .apex_extract
+          unzip -o Apex_lista_para_Safari.zip -d .apex_extract
+          shopt -s dotglob nullglob
+          items=(.apex_extract/*)
+          if [ "${#items[@]}" -eq 1 ] && [ -d "${items[0]}" ]; then
+            cp -a "${items[0]}"/. .
+          else
+            cp -a .apex_extract/. .
+          fi
+          rm -rf .apex_extract
+      - name: Commit extracted app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Extract Apex web app for deployment" || exit 0
+          git push
